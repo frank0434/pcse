@@ -33,7 +33,11 @@ class Test_WOFOST_Assimilation(unittest.TestCase):
         cropdata = {"AMAXTB":[0,35.83, 1,35.83, 1.3,35.83, 2,4.48],
                     "EFFTB":[0.,0.45, 40.,0.45],
                     "KDIFTB":[0,0.6, 2,0.6],
-                    "TMPFTB":[0,0.01, 10,0.6, 15,1, 25,1, 35,0],
+                    # "TMPFTB":[0,0.01, 10,0.6, 15,1, 25,1, 35,0],
+                    "tm1": [9],
+                    "t1": [14],
+                    "t2": [22],
+                    "te": [36],
                     "TMNFTB":[0.,0., 3.,1.]}
         self.kiosk = VariableKiosk()
         dummyday = date(2000,1,1)
