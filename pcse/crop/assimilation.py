@@ -9,7 +9,7 @@ from collections import deque
 
 from ..traitlets import Instance, Float 
 
-from ..util import limit, astro, doy, AfgenTrait
+from ..util import limit, astro, doy, AfgenTrait, replace_TMPFTB
 from ..base import ParamTemplate, SimulationObject, RatesTemplate
 
 try:
@@ -201,7 +201,11 @@ class WOFOST_Assimilation(SimulationObject):
         AMAXTB = AfgenTrait()
         EFFTB  = AfgenTrait()
         KDIFTB = AfgenTrait()
-        TMPFTB = AfgenTrait()
+        tm1 = Float(-99)
+        t1 = Float(-99)
+        t2 = Float(-99)
+        te = Float(-99)
+        # TMPFTB = replace_TMPFTB()
         TMNFTB = AfgenTrait()
 
     class RateVariables(RatesTemplate):
@@ -273,7 +277,8 @@ class WOFOST_Assimilation(SimulationObject):
 
         # gross assimilation and correction for sub-optimum average day temperature
         AMAX = p.AMAXTB(k.DVS)
-        AMAX *= p.TMPFTB(drv.DTEMP)
+        # AMAX *= p.TMPFTB(drv.DTEMP)
+        AMAX *= replace_TMPFTB(drv.DTEMP, p.tm1, p.t1, p.t2, p.te)
         KDIF = p.KDIFTB(k.DVS)
         EFF = p.EFFTB(drv.DTEMP)
         DTGA = totass(DAYL, AMAX, EFF, k.LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
@@ -350,7 +355,11 @@ class WOFOST_Assimilation2(SimulationObject):
         AMAXTB = AfgenTrait()
         EFFTB = AfgenTrait()
         KDIFTB = AfgenTrait()
-        TMPFTB = AfgenTrait()
+        tm1 = Float(-99)
+        t1 = Float(-99)
+        t2 = Float(-99)
+        te = Float(-99)
+        # TMPFTB = replace_TMPFTB()
         TMNFTB = AfgenTrait()
         CO2AMAXTB = AfgenTrait()
         CO2EFFTB = AfgenTrait()
@@ -389,7 +398,8 @@ class WOFOST_Assimilation2(SimulationObject):
         # temperature and CO2 concentration
         AMAX = p.AMAXTB(DVS)
         AMAX *= p.CO2AMAXTB(p.CO2)
-        AMAX *= p.TMPFTB(drv.DTEMP)
+        # AMAX *= p.TMPFTB(drv.DTEMP)
+        AMAX *= replace_TMPFTB(drv.DTEMP, p.tm1, p.t1, p.t2, p.te)
         KDIF = p.KDIFTB(DVS)
         EFF  = p.EFFTB(drv.DTEMP) * p.CO2EFFTB(p.CO2)
         DTGA = totass(DAYL, AMAX, EFF, LAI, KDIF, drv.IRRAD, DIFPP, DSINBE, SINLD, COSLD)
