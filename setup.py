@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 import os
 import io
 
-PACKAGE = "pcse"
-NAME = "PCSE"
+PACKAGE = "pcse_sa"
+NAME = "PCSE_SA"
 DESCRIPTION = 'Framework for developing crop simulation models, ' \
               'includes an implementation of '\
               'the WOFOST and LINTUL crop simulation models and ' \
