@@ -9,15 +9,13 @@ import copy
 import platform
 import tempfile
 import logging
+import numpy as np
 from math import log10, cos, sin, asin, sqrt, exp, pi, radians
 from collections import namedtuple
 from bisect import bisect_left
 import textwrap
 import sqlite3
-if sys.version_info > (3,8):
-    from collections.abc import Iterable
-else:
-    from collections import Iterable
+from collections import Iterable
 
 from . import exceptions as exc
 from .traitlets import TraitType
@@ -32,7 +30,51 @@ SatVapourPressure = lambda temp: 0.6108 * exp((17.27 * temp) / (237.3 + temp))
 astro_nt = namedtuple("AstroResults", "DAYL, DAYLP, SINLD, COSLD, DIFPP, "
                                       "ATMTR, DSINBE, ANGOT")
 
+def replace_TMPFTB(DTEMP, tm1, t1, t2, te):
+    """
+    This function replaces the TMPFTB (Temperature Function Table) in the model. Based on the Khan et al. (2019) paper.
+    
+    Parameters:
+    DTEMP (numpy array): Array of daily temperature values.
+    tm1 (float): The temperature of the curve at the inflexion point.
+    t1 (float): Lower temperature threshold for optimal growth.
+    t2 (float): Upper temperature threshold for optimal growth.
+    te (float): Maximum temperature threshold at which the photosynthesis ceases or close to zero.
 
+    Returns:
+    numpy array: Array of temperature function values for each temperature in DTEMP.
+
+    The function calculates a temperature function value for each temperature in DTEMP.
+    The temperature function is calculated differently depending on whether the temperature
+    is below the lower optimal threshold (t1), within the optimal range (t1 to t2), or
+    above the upper optimal threshold (t2).
+    """
+    
+    # For temperatures below the lower optimal threshold, calculate the temperature function
+    # using a formula that accounts for the temperature's deviation from the lower threshold
+    # and its ratio to the lower threshold.
+    low_temp_func = 1 * (1 + (t1 - DTEMP) / (t1 - tm1)) * (DTEMP / t1) ** (t1 / (t1 - tm1))
+    
+    # For temperatures within the optimal range, the temperature function is 1.
+    optimal_temp_func = 1
+    
+    # For temperatures above the upper optimal threshold, calculate the temperature function
+    # using a formula that accounts for the temperature's deviation from the upper threshold
+    # and its ratio to the sum of the lower threshold and the difference between the upper
+    # and lower thresholds.
+    high_temp_func = 1 * ((te - DTEMP)/(te - t2))*((DTEMP + t1 - t2)/t1)**(t1/(te - t2))
+    
+    # Use numpy's where function to apply the appropriate temperature function calculation
+    # for each temperature in DTEMP.
+    return np.where(DTEMP < t1, low_temp_func, np.where((DTEMP >= t1) & (DTEMP <= t2), optimal_temp_func, high_temp_func))
+# # add a function to replace the TMPFTB
+# def replace_TMPFTB(DTEMP, tm1, t1, t2, te):
+#     return np.where(DTEMP < t1, 
+#                     1 * (1 + (t1 - DTEMP) / (t1 - tm1)) * (DTEMP / t1) ** (t1 / (t1 - tm1)),
+#                     np.where((DTEMP >= t1) & (DTEMP <= t2), 1, 
+#                              1 * ((te - DTEMP)/(te - t2))*((DTEMP + t1 - t2)/t1)**(t1/(te - t2))))
+
+# original 
 def reference_ET(DAY, LAT, ELEV, TMIN, TMAX, IRRAD, VAP, WIND,
                  ANGSTA, ANGSTB, ETMODEL="PM", **kwargs):
     """Calculates reference evapotranspiration values E0, ES0 and ET0.
