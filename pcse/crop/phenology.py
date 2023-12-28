@@ -12,7 +12,7 @@ import datetime
 from ..traitlets import Float, Int, Instance, Enum, Bool
 from ..decorators import prepare_rates, prepare_states
 
-from ..util import limit, daylength, AfgenTrait
+from ..util import limit, daylength, AfgenTrait, replace_DTSMTB
 from ..base import ParamTemplate, StatesTemplate, RatesTemplate, \
      SimulationObject, VariableKiosk
 from .. import signals
@@ -280,7 +280,10 @@ class DVS_Phenology(SimulationObject):
         DLC    = Float(-99.)  # Critical day length for phenol. development
         DVSI   = Float(-99.)  # Initial development stage
         DVSEND = Float(-99.)  # Final development stage
-        DTSMTB = AfgenTrait() # Temperature response function for phenol.
+        # DTSMTB replacement 
+        t1_pheno = Float(-99.) # Base temperature for phenology development
+        te_pheno = Float(-99.) # Maximum temperature for phenology development
+        # DTSMTB = AfgenTrait() # Temperature response function for phenol.
                               # development.
         CROP_START_TYPE = Enum(["sowing", "emergence"])
         CROP_END_TYPE = Enum(["maturity", "harvest", "earliest"])
@@ -388,12 +391,14 @@ class DVS_Phenology(SimulationObject):
 
         elif s.STAGE == 'vegetative':
             r.DTSUME = 0.
-            r.DTSUM = p.DTSMTB(drv.TEMP) * VERNFAC * DVRED
+            r.DTSUM = replace_DTSMTB(drv.TEMP, p.t1_pheno, p.te_pheno) * VERNFAC * DVRED
+            # r.DTSUM = p.DTSMTB(drv.TEMP) * VERNFAC * DVRED
             r.DVR = r.DTSUM/p.TSUM1
 
         elif s.STAGE == 'reproductive':
             r.DTSUME = 0.
-            r.DTSUM = p.DTSMTB(drv.TEMP)
+            r.DTSUM = replace_DTSMTB(drv.TEMP, p.t1_pheno, p.te_pheno) 
+            # r.DTSUM = p.DTSMTB(drv.TEMP)
             r.DVR = r.DTSUM/p.TSUM2
         elif s.STAGE == 'mature':
             r.DTSUME = 0.

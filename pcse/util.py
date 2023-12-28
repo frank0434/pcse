@@ -30,6 +30,28 @@ SatVapourPressure = lambda temp: 0.6108 * exp((17.27 * temp) / (237.3 + temp))
 astro_nt = namedtuple("AstroResults", "DAYL, DAYLP, SINLD, COSLD, DIFPP, "
                                       "ATMTR, DSINBE, ANGOT")
 
+def replace_DTSMTB(Temp_mean, tb_pheno, te_pheno):
+    """
+    This is a smooth function for DTSMTB based on the value of Temp_mean.
+
+    Parameters:
+    Temp_mean (float): The mean air temperature.
+    tb_pheno, te_pheno (float): Parameters of the piecewise function.
+
+    Returns:
+    float: The result of the piecewise function.
+    """
+    condition1 = Temp_mean <= tb_pheno
+    condition2 = (Temp_mean > tb_pheno)  & (Temp_mean <= te_pheno)
+
+    # Define the equations 
+    equation1 = 0
+    equation2 = Temp_mean - tb_pheno
+    # Calculate the result of the piecewise function
+    result = np.where(condition1, equation1, equation2)
+
+    return result
+
 def replace_TMPFTB(DTEMP, tm1, t1, t2, te):
     """
     This function replaces the TMPFTB (Temperature Function Table) in the model. Based on the Khan et al. (2019) paper.
