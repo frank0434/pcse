@@ -83,7 +83,7 @@ LOG_CONFIG = \
                     },
                 },
                 'root': {
-                         'handlers': ['console', 'file'],
+                         'handlers': ['null'],
                          'propagate': True,
                          'level':'NOTSET'
                 }
